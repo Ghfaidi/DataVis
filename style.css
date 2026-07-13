@@ -1,16 +1,54 @@
+/*
+
+This is the "make it look nice" file. HTML builds the boxes/buttons/text,
+and this file decides their colors, sizes, spacing, borders, etc.
+
+Nothing in here does any logic or math - if you're trying to understand
+HOW the charts work, look at the .js files instead. This file only answers
+"what does it look like".
+
+The file is roughly split into two halves:
+  1. PART 1 styles - the simple scatterplot/radar chart/table page
+  2. PART 2 styles - the big 5-chart dashboard
+(there's a big banner comment further down marking where Part 2 starts)
+
+*/
+
+/* :root defines "variables" - reusable values we can refer to elsewhere
+   with var(--name). Handy so if we want to change the accent color, we only
+   change it in ONE place instead of hunting through the whole file. */
+:root {
+    --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+    --color-pareto: #e8a33d;
+    /* amber/orange used for Pareto-optimal alloys everywhere */
+    --color-pinned: #1d4ed8;
+    /* blue used for "pinned" alloys everywhere */
+    --color-pinned-ring: #1d4ed8;
+    --color-accent: #e8a33d;
+    --color-bg-card: #fff;
+    --color-border: #e5e7eb;
+    --color-text-muted: #6b7280;
+    --radius-card: 10px;
+    --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Base look for the whole page: font, text size, no weird default margin */
 body {
     height: 100%;
     margin: 0;
-    font: 14px sans-serif;
+    font-size: 14px;
+    font-family: var(--font-body);
 }
 
+/* The small "created by ..." credit line at the top of the page */
 #credits {
     font: 12px sans-serif;
     padding-bottom: 1%;
 }
 
 .instructions {
-    color: red;
+    color: #374151;
+    font-weight: 600;
 }
 
 .optional {
@@ -18,6 +56,7 @@ body {
 }
 
 /* Style tab links */
+/* The 3 big gray buttons at the top (Data Loading / Basic Visualization / Dashboard) */
 .tablink {
     background-color: #555;
     color: white;
@@ -31,11 +70,14 @@ body {
     width: 33%;
 }
 
+/* Lighter gray when you hover the mouse over a tab button */
 .tablink:hover {
     background-color: #777;
 }
 
 /* Style the tab content (and add height:100% for full page content) */
+/* Each tab's content box. display:none means it's hidden by default -
+   openPage() in dataVis.js swaps this to "block" for whichever tab is active. */
 .tabcontent {
     color: black;
     display: none;
@@ -43,12 +85,14 @@ body {
     height: 100%;
 }
 
+/* The plain data table shown in the "Data Loading" tab */
 .dataTableClass {
     width: 80%;
     border-collapse: collapse;
     border: 2px black solid;
 }
 
+/* Column header cells (the row with column names, in UPPERCASE) */
 .tableHeaderClass {
     border: 2px solid black;
     padding: 5px;
@@ -57,15 +101,20 @@ body {
     text-transform: uppercase;
 }
 
+/* Regular data cells in the table */
 .tableBodyClass {
     border: 1px solid black;
     padding: 5px;
 }
 
+/* Default font used inside any SVG chart (unless overridden below) */
 svg {
     font: 10px sans-serif;
 }
 
+/* A "card" box that holds one chart/section. In Part 1 these sit
+   side-by-side like table cells; in Part 2 this gets overridden further
+   down to look like a proper rounded card instead. */
 .container {
     display: table-cell;
     vertical-align: top;
@@ -74,12 +123,7 @@ svg {
     border: 0px solid black;
 }
 
-.dashboardGrid {
-    display: grid;
-    grid-template-columns: auto auto;
-    grid-gap: 10px;
-}
-
+/* The little tick lines and axis line on any chart's x/y axis */
 .axis line,
 .axis path {
     fill: none;
@@ -87,20 +131,24 @@ svg {
     shape-rendering: crispEdges;
 }
 
+/* The numbers/labels next to axis ticks */
 .axis text {
     fill: black;
 }
 
+/* Removes the default border box that <fieldset> normally has */
 fieldset {
     border-width: 0;
 }
 
+/* The legend box next to the radar chart (Part 1), listing selected/colored rows */
 #legend {
     border: 1px solid black;
     padding: 10px;
 }
 
 /* the style for the close-button in the legend */
+/* The little "×" button you click to remove an item from the legend */
 .close {
     display: inline-block;
     padding: 1px 5px;
@@ -119,6 +167,7 @@ fieldset {
 }
 
 /* the style for the circle in the legend */
+/* Small colored dot shown next to each legend entry, matching its scatterplot dot color */
 .color-circle {
     display: inline-block;
     width: 10px;
@@ -127,11 +176,26 @@ fieldset {
 }
 
 /* the style for dots in the scatterplot */
+/* Just makes the mouse turn into a "pointer" (hand) when hovering a dot, so it looks clickable */
 .dot {
     cursor: pointer;
 }
 
-/* tooltip for the scatterplot */
+/* Cell hover in data table (per-cell, matching the improved Part 1 code --
+   previously highlighted the whole row, now just the hovered cell, which
+   reads more literally as "highlight the current position of the mouse") */
+/* Turns a table cell light blue while the mouse is over it */
+.tableBodyClass:hover {
+    background-color: #d0e8ff;
+    cursor: default;
+}
+
+/* Tooltip
+   (fix from Part 1 review — this block used to be duplicated with slightly
+   different padding/font-size. Single definition now.) */
+/* The small dark popup box that follows your mouse and shows details about
+   whatever dot/line/cell you're hovering. Every chart reuses this same
+   ".tooltip" div (created on the fly in JS) so it only needs styling once. */
 div.tooltip {
     position: absolute;
     text-align: left;
@@ -142,19 +206,632 @@ div.tooltip {
     border: 0px;
     border-radius: 8px;
     pointer-events: none;
+    /* lets clicks "pass through" the tooltip to whatever's underneath */
     font-size: .7rem;
 }
-/* Cell hover in data table */
-.tableBodyClass:hover {
-    background-color: #d0e8ff;
-    cursor: default;
-}
-
-
 
 /* Axis labels */
+/* The text describing what an axis represents (e.g. "Yield Strength (MPa)") */
 .axis-label {
     fill: #333;
     font-size: 12px;
     font-weight: bold;
+}
+
+/* ===========================================================================
+   PART 2 — Dashboard styles
+   =========================================================================== */
+/* Everything below this line is about the big 5-chart Dashboard tab. */
+
+.dashboard-subtitle {
+    margin-top: -10px;
+    color: #555;
+    font-size: 13px;
+}
+
+/* The little status strip near the top of the dashboard ("1234 alloys
+   loaded · 56 Pareto-optimal · ..."), kept updated by updateStatusBar()
+   in dashboard.js */
+.dashboard-status {
+    background: #f4efe6;
+    border: 1px solid #d8cdb8;
+    border-radius: 6px;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    display: inline-block;
+}
+
+/* Cross-filter indicator (dashboard.js updateStatusBar()) — shown when
+   a Scatterplot target-zone/lasso or PCA lasso selection is currently
+   dimming the other charts. */
+/* This is the "cross-filtered from ... (clear)" text that appears in the status bar */
+.crossfilter-note {
+    color: #8a5a00;
+}
+
+.crossfilter-note a {
+    color: #8a5a00;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* The grid that arranges all 5 chart cards on the Dashboard tab.
+   "1fr 1fr" means: 2 equal-width columns. */
+.dashboardGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Always exactly 2 columns for the non-wide charts; collapse to 1 on small screens */
+/* On narrow screens (like a phone or small window), stack everything into
+   a single column instead of squishing 2 columns together */
+@media (max-width: 860px) {
+    .dashboardGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* A chart card marked "wide" (like the Parallel Coordinates Plot) stretches
+   across both grid columns instead of sitting in just one */
+.container.wide {
+    grid-column: 1 / -1;
+}
+
+/* .container's base rule (near the top of this file) sets
+   display: table-cell for Part 1's Basic Visualization tab, where two
+   containers sit side-by-side without a grid parent. Inside the Part 2
+   dashboard grid, table-cell display fights with CSS Grid sizing and also
+   makes border-radius/box-shadow render inconsistently across browsers
+   (this was the main reason the dashboard cards looked flat instead of like
+   cards). Scope the override to just the dashboard grid so Part 1 is
+   untouched. */
+/* Undo the table-cell behavior specifically for cards inside the dashboard grid */
+.dashboardGrid .container {
+    display: block;
+    height: auto;
+    padding: 16px 18px;
+}
+
+/* Turns every ".container" box into a white rounded "card" with a subtle shadow */
+.container {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+/* Chart title inside a dashboard card (e.g. "Parallel Coordinates Plot") */
+.dashboardGrid .container h2 {
+    margin-top: 0;
+    margin-bottom: 4px;
+    font-size: 17px;
+}
+
+/* Small gray subtitle line under each chart title */
+.dashboardGrid .container h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-weight: normal;
+    color: #666;
+    font-size: 12.5px;
+}
+
+.dashboardGrid .container.wide {
+    /* Wide cards span both columns — let them fill the full available row width */
+}
+
+/* Small gray helper text under a chart, explaining how to interact with it */
+.chart-hint {
+    font-size: 11px;
+    color: #777;
+    margin: 4px 0 0;
+}
+
+/* Placeholder message shown instead of a chart when there's nothing to
+   draw yet (e.g. "pin an alloy first") - dashed border makes it look like
+   an empty slot rather than a real chart */
+.chart-stub-note {
+    font-size: 13px;
+    color: #999;
+    font-style: italic;
+    padding: 30px 10px;
+    text-align: center;
+    border: 1px dashed #ccc;
+    border-radius: 6px;
+}
+
+/* PCP / heatmap axis picker container */
+/* The whole box (in Chart 1 and Chart 4) where you tick checkboxes to
+   choose which variables/axes to show */
+.pcp-axis-picker {
+    font-size: 12px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Controls row inside the picker (label + quick-action buttons + inline warning) */
+/* The top row of that picker: "Axes:" label + "Select all"/"Reset" buttons */
+.pcp-picker-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    margin-bottom: 6px;
+}
+
+/* One category row (e.g. "Chemical Composition: [Si] [Cu] ...") */
+/* One row of checkboxes for one category (e.g. all "Chemical Composition" checkboxes together) */
+.pcp-axis-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 10px;
+    padding: 3px 0;
+    border-bottom: 1px dashed #f0f0f0;
+}
+
+.pcp-axis-group:last-child {
+    border-bottom: none;
+}
+
+/* Category header label ("Inputs:", "Mechanical Properties:", …) */
+.pcp-group-label {
+    font-weight: 600;
+    font-size: 11px;
+    white-space: nowrap;
+    min-width: 160px;
+}
+
+/* Inline warning shown when user tries to drop below the minimum axis count */
+/* The little red warning box: "Minimum 2 axes required..." */
+.pcp-min-axes-note {
+    display: none;
+    font-size: 11px;
+    color: #b91c1c;
+    font-style: italic;
+    background: #fff1f1;
+    border: 1px solid #fca5a5;
+    border-radius: 4px;
+    padding: 1px 7px;
+}
+
+.picker-label {
+    font-weight: bold;
+    margin-right: 2px;
+}
+
+/* One checkbox + its text label, e.g. the "[x] Si" checkbox */
+.axis-checkbox {
+    white-space: nowrap;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+/* Small buttons like "Select all" / "Reset to default" / "Reset filters" */
+.pcp-reset-btn {
+    font-size: 11px;
+    margin-left: 6px;
+    padding: 2px 8px;
+    cursor: pointer;
+}
+
+/* PCP axis labels / invert button */
+/* The name written above each vertical axis line in the Parallel Coordinates Plot */
+.pcp-axis-label {
+    font-size: 11px;
+}
+
+/* The little up/down arrow icon you click to flip an axis direction */
+.pcp-invert-btn {
+    font-size: 12px;
+    fill: #888;
+}
+
+.pcp-invert-btn:hover {
+    fill: #333;
+}
+
+/* Numeric readout of an axis's active brush filter (chart1-pcp.js
+   renderChart1), shown just below the axis when a filter is active. */
+/* The small number range shown under an axis once you've dragged a filter on it */
+.pcp-filter-range {
+    font-size: 9px;
+    fill: #8a5a00;
+}
+
+/* Highlight a Pareto-optimal line in red when you hover over it in the PCP chart */
+.pareto-line:hover {
+    stroke: #c0392b !important;
+    stroke-width: 3 !important;
+}
+
+/* brush handles */
+/* "Brush" = the draggable selection box/range you draw on a chart to filter
+   data. These style the little handles you grab to resize the selection. */
+.brush .handle {
+    fill: #666;
+}
+
+/* The semi-transparent amber rectangle showing the current brushed/selected range */
+.brush .selection {
+    fill: #e8a33d;
+    fill-opacity: 0.15;
+    stroke: #e8a33d;
+}
+
+/* Chart 2 — Scatterplot controls */
+/* The row of "x:" / "y:" dropdowns above the scatterplot */
+.scatter-controls {
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.scatter-controls select {
+    margin-right: 10px;
+    font-size: 12px;
+}
+
+/* The button with the ⟲-style icon that swaps the x and y axis choices */
+.swap-axes-btn {
+    margin-right: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 1px 6px;
+}
+
+/* Row of mode buttons like "Hover only" / "Target zone" / "Lasso" */
+.scatter-mode-bar {
+    margin-bottom: 6px;
+}
+
+/* A generic small button used for toggling modes (Pearson/Spearman, Hover/Lasso, etc.) */
+.mode-btn {
+    font-size: 11px;
+    padding: 3px 9px;
+    margin-right: 4px;
+    cursor: pointer;
+    border: 1px solid #bbb;
+    background: #f7f7f7;
+    border-radius: 4px;
+}
+
+/* The currently-selected mode button gets colored in amber so it's obvious which mode is on */
+.mode-btn.active {
+    background: #e8a33d;
+    color: #fff;
+    border-color: #c8842a;
+}
+
+/* A mode button that can't be clicked right now (grayed out, "not-allowed" cursor) */
+.mode-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+}
+
+/* The text label under each scatterplot axis (e.g. "Yield Strength → better") */
+.scatter-axis-title {
+    font-size: 11px;
+    fill: #333;
+}
+
+/* On-chart callout shown when a 3rd Pareto objective is active
+   (chart2-scatter.js renderChart2) -- makes the 3-objective front visible
+   at a glance rather than only mentioned in the hint text below the chart. */
+.scatter-z-note {
+    font-size: 10px;
+    font-weight: bold;
+    fill: #8a5a00;
+}
+
+/* Scrollable list panel showing which alloys match the current lasso/target-zone selection */
+.scatter-match-panel {
+    margin-top: 8px;
+    font-size: 12px;
+    max-height: 140px;
+    overflow-y: auto;
+}
+
+.match-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 6px 0;
+}
+
+.match-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.pin-btn {
+    font-size: 10px;
+    padding: 1px 8px;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+/* Chart 3 — PCA embedding map */
+/* Box holding the sliders that let you weight how important each property is */
+.pca-weight-panel {
+    font-size: 12px;
+    margin-bottom: 6px;
+    max-width: 420px;
+}
+
+/* One row = one slider (label + slider + live value) */
+.weight-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+}
+
+.weight-label {
+    flex: 1;
+    font-size: 11px;
+    color: #444;
+}
+
+/* Live numeric readout next to each weight slider (chart3-pca.js
+   renderChart3): raw value + the normalized percentage actually used in
+   computeDirectedWeightedScore. */
+.weight-value {
+    font-size: 10px;
+    color: #777;
+    font-variant-numeric: tabular-nums;
+    margin: 0 6px;
+    min-width: 58px;
+    text-align: right;
+}
+
+.weight-row input[type="range"] {
+    width: 140px;
+}
+
+.pca-axis-title {
+    font-size: 11px;
+    fill: #333;
+}
+
+/* Color legend for the PCA map's weighted-score encoding (chart3-pca.js
+   renderChart3) -- color is the primary channel in that chart, so this is
+   the key for reading it. */
+/* Small text labels under the color gradient bar (e.g. "poor" ... "excellent") */
+.pca-legend-label {
+    font-size: 9px;
+    fill: #555;
+}
+
+.pca-legend-title {
+    font-size: 9px;
+    font-weight: bold;
+    fill: #555;
+}
+
+/* The dashed outline drawn while you're dragging a freehand lasso selection */
+.lasso-path {
+    pointer-events: none;
+}
+
+/* Chart 4 — Correlation heatmap */
+/* Lets the heatmap scroll sideways if there are too many variables to fit on screen */
+.heatmap-wrapper {
+    overflow-x: auto;
+    overflow-y: visible;
+    /* Extra top padding gives the rotated (-45deg) column-header labels in
+       chart4-heatmap.js room to swing upward without clipping against the
+       wrapper's edge -- see HEATMAP_TOP_PAD in that file. */
+    padding-top: 20px;
+}
+
+/* Row/column variable name labels around the heatmap grid */
+.heatmap-label {
+    font-size: 10px;
+    fill: #333;
+}
+
+/* The little correlation number printed inside each heatmap cell */
+.heatmap-value {
+    font-size: 9px;
+    pointer-events: none;
+}
+
+/* Chart 5 — Diverging dot plot */
+/* The row of colored dots + alloy names shown above the dot plot */
+.dotplot-legend {
+    margin: 6px 0;
+    font-size: 12px;
+}
+
+.legend-item {
+    margin-right: 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Section title inside the dot plot, e.g. "OUTPUT PROPERTIES" / "ELEMENTAL CHEMISTRY" */
+.dotplot-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* The element/property name label on the left of each dot-plot row (dotted underline = clickable) */
+.dotplot-element-label {
+    font-size: 11px;
+    fill: #333;
+    text-decoration: underline dotted;
+}
+
+.dotplot-element-label:hover {
+    fill: #c0392b;
+}
+
+/* PCP inline color legend */
+/* The little gradient bar legend shown above the Parallel Coordinates Plot */
+.pcp-color-legend-html {
+    display: inline-block;
+    margin: 4px 0 6px;
+    vertical-align: middle;
+}
+
+/* Export button */
+/* The "↓ Export PNG/SVG/CSV" buttons found on most charts */
+.export-btn {
+    font-size: 11px;
+    padding: 3px 10px;
+    cursor: pointer;
+    border: 1px solid #bbb;
+    background: #f7f7f7;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+
+.export-btn:hover {
+    background: #e8e8e8;
+}
+
+/* Chart-level export row */
+/* Pushes the export button to the right side of the chart card */
+.chart-export-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 4px;
+}
+
+/* PCA loadings panel */
+/* Box under the PCA chart showing which variables drive PC1/PC2 the most */
+.pca-loadings-panel {
+    margin-top: 10px;
+    font-size: 11px;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+}
+
+.pca-loadings-panel h5 {
+    margin: 6px 0 3px;
+    font-size: 11px;
+    color: #555;
+    font-weight: 600;
+}
+
+/* One row in the loadings panel: variable name + colored bar + number */
+.loadings-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+/* The gray "track" behind each loadings bar */
+.loadings-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* The colored bar itself, whose width shows how strong that variable's influence is */
+.loadings-bar {
+    height: 100%;
+    border-radius: 4px;
+}
+
+.loadings-col-name {
+    width: 110px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #333;
+}
+
+.loadings-val {
+    width: 40px;
+    text-align: right;
+    color: #555;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Loading state */
+/* Text shown briefly while heavy math (like PCA) is being computed on a big file */
+.loading-msg {
+    font-size: 13px;
+    color: #888;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+}
+
+/* Imputation warning in status bar */
+/* Warns the user that some missing values were auto-filled in (see stats.js imputeMean/imputeConstant) */
+.imputation-note {
+    color: #7c5a00;
+    font-size: 12px;
+}
+
+/* Pinned-alloy tag in the status bar — each has an × unpin link */
+/* The little blue "Alloy #12 ×" chip shown for each pinned alloy in the status bar */
+.pinned-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    padding: 0px 5px;
+    font-size: 11px;
+    color: #1d4ed8;
+    white-space: nowrap;
+}
+
+.unpin-link {
+    color: #1d4ed8;
+    font-weight: bold;
+    text-decoration: none;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.unpin-link:hover {
+    color: #b91c1c;
+}
+
+/* Ensure canvas-based chart wrappers scroll rather than overflow their card */
+/* Some charts are drawn on a <canvas> instead of pure SVG (faster for lots
+   of points) - this keeps those from spilling outside their card */
+.scatter-canvas-wrapper,
+.pca-canvas-wrapper {
+    overflow: hidden;
+    max-width: 100%;
+}
+
+/* (grid layout is defined above near the other dashboardGrid rules) */
+
+/* A quick "flash" animation: briefly glows amber then fades, used to draw
+   your eye to a chart that just updated because of something you clicked
+   elsewhere (see the heatmap cell click handler in chart4-heatmap.js) */
+@keyframes chart-flash-anim {
+    0% {
+        box-shadow: 0 0 0 4px #e8a33d, 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    100% {
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+}
+
+.chart-flash {
+    animation: chart-flash-anim 1.5s ease-out;
 }

@@ -10,143 +10,233 @@
 * All rights reserved.
 -->
 
+<!--
+    
+    This is the "skeleton" of the whole website. HTML doesn't do any
+    calculations or drawing itself - it just says "put a box here", "put a
+    button there". All the actual drawing of charts happens in the .js
+    (JavaScript) files, and all the colors/spacing come from style.css.
+
+    Think of this file like the empty picture frames on a wall. The .js
+    files are the artists that later fill those frames with pictures (charts).
+
+    The page has 3 "tabs" (like browser tabs, but inside the page):
+      1. Data Loading      -> upload a CSV/TSV file and see it as a table
+      2. Basic Visualization -> a simple scatterplot + radar chart (Part 1)
+      3. Dashboard         -> the big 5-chart alloy dashboard (Part 2)
+    Only one tab is visible at a time - clicking the buttons swaps them.
+    
+-->
+
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Data Visualization Exercise</title>
+    <title>Rapid Alloy Discovery · Visualization Dashboard</title>
 
+    <!-- This loads a nicer-looking font (Inter) from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Default look for the jQuery UI widgets (used for the fancy dropdown menus) -->
     <link rel="stylesheet" href="http://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <!-- Our own custom colors/spacing/layout rules live here -->
     <link rel="stylesheet" type="text/css" href="style.css">
 
-    <!-- include d3 -->
+    <!--
+        These <script> tags load code libraries and our own files.
+        ORDER MATTERS here: a file can only use functions/variables that were
+        already defined by a file loaded before it. That's why d3 and jQuery
+        (the outside libraries we depend on) come first, then our own files,
+        starting with the ones that just define shared data/helpers
+        (dataVis.js, stats.js, dashboard.js) before the 5 chart files
+        that actually use them.
+    -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
-
-    <!-- include jQueryUI -->
+    <!-- d3.js: the library that actually draws all the charts (SVG/Canvas) -->
     <script src="https://code.jquery.com/jquery-3.6.1.js"></script>
+    <!-- jQuery: a helper library for interacting with page elements -->
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
-
-    <!-- PART 1: include dataVis script -->
+    <!-- jQuery UI: gives us the nice styled dropdown menus in Part 1 -->
     <script src="dataVis.js"></script>
-    <!-- PART 2: include scripts for the dashboard -->
+    <!-- Part 1 logic: file upload, data table, scatterplot, radar chart -->
+    <script src="stats.js"></script>
+    <!-- Math helpers used by the dashboard: PCA, correlation, Pareto front, etc. -->
     <script src="dashboard.js"></script>
+    <!-- Shared "brain" of the Part 2 dashboard: holds the data, wires the 5 charts together -->
+    <script src="chart1-pcp.js"></script>
+    <!-- Chart 1: Parallel Coordinates Plot -->
+    <script src="chart2-scatter.js"></script>
+    <!-- Chart 2: Scatterplot + Pareto front -->
+    <script src="chart3-pca.js"></script>
+    <!-- Chart 3: PCA embedding map -->
+    <script src="chart4-heatmap.js"></script>
+    <!-- Chart 4: Correlation heatmap -->
+    <script src="chart5-dotplot.js"></script>
+    <!-- Chart 5: Diverging dot plot -->
 
 </head>
 
-<!-- call init function when page has loaded -->
-<body onload="init()">
 
-<h1>Data Visualization Exercise</h1>
+<body>
 
-<!-- credits -->
-<div id="credits">
-    Created by <span class="instructions"> Meriem Ferjani </span> and <span class="instructions"> Ghofrane Faidi </span>
-    for the Data Visualization Lecture at <a href="https://www.fim.uni-passau.de/digitale-bildverarbeitung"> Faculty of Computer
-    Science and Mathematics - Chair of Cognitive sensor systems - University of Passau</a>.
-</div>
+    <h1>Rapid Alloy Discovery Dashboard</h1>
 
-<!-- create buttons to select tabs -->
-<button class="tablink" onclick="openPage('DataLoading', this, 'blue')" id="defaultOpen" >Data Loading</button>
-<button class="tablink" onclick="openPage('BasicVisualization', this, 'blue')">Basic Visualization</button>
-<button class="tablink" onclick="openPage('Dashboard', this, 'blue')">Dashboard</button>
-
-<!-- Tab 1 -->
-<div id="DataLoading" class="tabcontent">
-
-    <!-- data selector -->
-    <p>Select your data here: <input id="upload" type="file"></p>
-
-    <!-- data table -->
-    <div id="dataTable"></div>
-
-</div>
-
-<!-- Tab 2 -->
-<div id="BasicVisualization" class="tabcontent">
-
-    <!-- scatterplot -->
-    <div class="container">
-        <!-- scatterplot menu -->
-        <h2>Scatterplot</h2>
-
-        <p>Select dimensions to be displayed here: </p>
-        <div id="menu">
-            <form action="#">
-                <fieldset>
-                    <label for="scatterX">x axis: </label>
-                    <select name="scatterX" id="scatterX">
-                    </select>
-                    <br/>
-                    <label for="scatterY">y axis: </label>
-                    <select name="scatterY" id="scatterY">
-                    </select>
-                    <br/>
-                    <label for="size">size: </label>
-                    <select name="size" id="size">
-                    </select>
-                </fieldset>
-            </form>
-        </div>
-        <!-- scatterplot SVG -->
-        <div id="sp"></div>
+    <!-- credits -->
+    <div id="credits">
+        Created by <b>Meriam Ferjani</b> and <b>Ghofrane Faidi</b>
+        for the Data Visualization Lecture at <a href="https://www.fim.uni-passau.de/digitale-bildverarbeitung"> Faculty
+            of Computer
+            Science and Mathematics - Chair of Cognitive sensor systems - University of Passau</a>.
     </div>
 
-    <!-- radar chart -->
-    <div class="container">
-        <h2>Radar Chart</h2>
-        <!-- radar chart SVG -->
-        <div id="radar"></div>
-        <div id="legend">
-            <b>Legend:</b><br/>
-        </div>
+    <!--
+        These 3 buttons are the "tabs". Clicking one calls the openPage()
+        function (defined near the bottom of dataVis.js) which hides every
+        <div class="tabcontent"> and then shows only the one whose id matches
+        what was clicked (e.g. clicking this button shows #DataLoading).
+        id="defaultOpen" just marks which tab should be open first when the
+        page loads (see the very last <script> tag at the bottom of this file).
+    -->
+    <button class="tablink" onclick="openPage('DataLoading', this, 'blue')" id="defaultOpen">Data Loading</button>
+    <button class="tablink" onclick="openPage('BasicVisualization', this, 'blue')">Basic Visualization</button>
+    <button class="tablink" onclick="openPage('Dashboard', this, 'blue')">Dashboard</button>
+
+    <!-- ============ Tab 1: Data Loading ============ -->
+    <!-- This tab just lets you pick a file and shows it as a plain table -->
+    <div id="DataLoading" class="tabcontent">
+
+        <!--
+            data selector: this is just a native "choose file" button.
+            When the user picks a file, dataVis.js is listening for that
+            "change" event (see fileInput.addEventListener in dataVis.js)
+            and reads the file's contents.
+        -->
+        <p>Select your data here: <input id="upload" type="file"></p>
+
+        <!-- Empty box - dataVis.js will fill this with a <table> once a file is loaded -->
+        <div id="dataTable"></div>
+
     </div>
 
-</div>
+    <!-- ============ Tab 2: Basic Visualization ============ -->
+    <!-- A simple scatterplot and a radar chart, both built "by hand" in dataVis.js as a first exercise -->
+    <div id="BasicVisualization" class="tabcontent">
 
-<!-- Tab 3 -->
-<div id="Dashboard" class="tabcontent">
-    <h1>Dashboard Example</h1>
-
-    <!-- TODO: The environment of your dashboard can be freely customized. Here is a general layout to get you started. -->
-
-    <!-- Grid container -->
-    <div class="dashboardGrid">
-
-        <!-- chart 1 -->
+        <!-- scatterplot -->
         <div class="container">
-           <h2>Chart 1</h2>
-			<h4>Data representation 1.</h4>
-            <!-- radar chart SVG -->
-            <div id="chart1"></div>
+            <!-- scatterplot menu -->
+            <h2>Scatterplot</h2>
+
+            <p>Select dimensions to be displayed here: </p>
+            <!--
+                These 3 dropdown menus let the user choose which data columns
+                map to the x-axis, y-axis, and dot size. They start out empty
+                (no <option> tags) - dataVis.js fills them in with the column
+                names once a file is loaded (see the initMenu() function).
+            -->
+            <div id="menu">
+                <form action="#">
+                    <fieldset>
+                        <label for="scatterX">x axis: </label>
+                        <select name="scatterX" id="scatterX">
+                        </select>
+                        <br />
+                        <label for="scatterY">y axis: </label>
+                        <select name="scatterY" id="scatterY">
+                        </select>
+                        <br />
+                        <label for="size">size: </label>
+                        <select name="size" id="size">
+                        </select>
+                    </fieldset>
+                </form>
+            </div>
+            <!-- scatterplot SVG: empty box where dataVis.js draws the actual dots -->
+            <div id="sp"></div>
         </div>
 
-        <!-- chart 2 -->
+        <!-- radar chart -->
         <div class="container">
-           <h2>Chart 2</h2>
-			 <h4>Data representation 2.</h4>
-            <!-- radar chart SVG -->
-            <div id="chart2"></div>
-        </div>
-
-        <!-- chart 3 -->
-        <div class="container">
-            <h2>Chart 3</h2>
-			  <h4>Data representation 3.</h4>
-            <!-- radar chart SVG -->
-            <div id="chart3"></div>
-        </div>
-
-        <!-- chart 4 -->
-        <div class="container">
-            <h2>Chart 4</h2>
-            <h4>Data representation 4.</h4>
-            <!-- radar chart SVG -->
-            <div id="chart4"></div>
+            <h2>Radar Chart</h2>
+            <!-- radar chart SVG: empty box where dataVis.js draws the spider/radar shape -->
+            <div id="radar"></div>
+            <!-- Filled in whenever the user clicks a dot to "select" it, so they can tell which color = which row -->
+            <div id="legend">
+                <b>Legend:</b><br />
+            </div>
         </div>
 
     </div>
 
-</div>
+    <!-- ============ Tab 3: Dashboard ============ -->
+    <!--
+        This is the "real" project: 5 charts about aluminum alloys, all
+        talking to each other (click something in one chart and the others
+        react). Every <div id="chartN"> below starts completely empty - the
+        matching chartN-*.js file finds it by that id and builds the whole
+        chart inside it with JavaScript.
+    -->
+    <div id="Dashboard" class="tabcontent">
+        <h2>Aluminum Alloy Discovery Dashboard</h2>
+        <p class="dashboard-subtitle">Group 05 &middot; Meriam Ferjani, Ghofrane Faidi</p>
 
+        <!-- live summary of dataset size / Pareto front / pinned alloys / cross-filter -->
+        <!-- Small text box kept up to date by updateStatusBar() in dashboard.js -->
+        <div id="dashboardStatus" class="dashboard-status"></div>
 
+        <!-- Button to download the currently-filtered alloys as a CSV file (see exportFilteredCsv() in dashboard.js) -->
+        <button id="exportCsvBtn" class="export-btn" style="margin-bottom:10px;" onclick="exportFilteredCsv()">&#8595;
+            Download filtered alloys (CSV)</button>
+
+        <!-- Grid container: arranges the 5 chart cards below into a neat grid (see .dashboardGrid in style.css) -->
+        <div class="dashboardGrid">
+
+            <!-- chart 1: Parallel Coordinates Plot -->
+            <div class="container wide">
+                <h2>Parallel Coordinates Plot</h2>
+                <h4>Overview of alloys across selected axes. Pareto-optimal alloys (YS&uarr; / CSC&darr;) highlighted in
+                    amber.</h4>
+                <div id="chart1"></div>
+            </div>
+
+            <!-- chart 2: Scatterplot + Pareto front -->
+            <div class="container">
+                <h2>Scatterplot &middot; Pareto Front</h2>
+                <h4 id="chart2Subtitle">Yield strength vs. hot-crack susceptibility trade-off.</h4>
+                <div id="chart2"></div>
+            </div>
+
+            <!-- chart 3: PCA embedding map -->
+            <div class="container">
+                <h2>PCA Embedding Map</h2>
+                <h4>2D projection of the standardized alloy space.</h4>
+                <div id="chart3"></div>
+            </div>
+
+            <!-- chart 4: Correlation heatmap -->
+            <div class="container">
+                <h2>Correlation Heatmap</h2>
+                <h4>Pearson / Spearman correlation for a selected variable subset.</h4>
+                <div id="chart4"></div>
+            </div>
+
+            <!-- chart 5: Diverging dot plot -->
+            <div class="container">
+                <h2>Diverging Dot Plot</h2>
+                <h4>Pinned alloys compared element-by-element against the dataset mean.</h4>
+                <div id="chart5"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!--
+        This is the very first thing that runs. As soon as the whole page
+        (the "DOM") has finished loading, the browser calls init(), which is
+        defined in dataVis.js. That function sets up the scatterplot/radar
+        chart boxes and starts listening for a file to be uploaded.
+    -->
+    <script>document.addEventListener('DOMContentLoaded', init);</script>
 </body>
+
 </html>
